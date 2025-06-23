@@ -1,12 +1,14 @@
 
 import { useState, useEffect } from 'react';
 import { useTriagem, Triagem } from './useTriagem';
+import { useAuth } from './useAuth';
 
 export const useTriagemList = () => {
   const [pacientesAguardando, setPacientesAguardando] = useState<Triagem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { getTriagens } = useTriagem();
+  const { user, loading: authLoading } = useAuth();
 
   const loadTriagens = async () => {
     console.log('🔄 Carregando triagens...');
@@ -52,6 +54,20 @@ export const useTriagemList = () => {
     let mounted = true;
     
     const fetchData = async () => {
+      // Aguardar a autenticação estar completa
+      if (authLoading) {
+        console.log('🔒 Aguardando autenticação...');
+        return;
+      }
+      
+      // Se não há usuário autenticado, não tentar carregar triagens
+      if (!user) {
+        console.log('❌ Usuário não autenticado');
+        setPacientesAguardando([]);
+        setLoading(false);
+        return;
+      }
+      
       if (mounted) {
         await loadTriagens();
       }
@@ -62,9 +78,13 @@ export const useTriagemList = () => {
     return () => {
       mounted = false;
     };
-  }, []); // Remover qualquer dependência para evitar loops
+  }, [user, authLoading]); // Adicionar authLoading como dependência
 
   const refreshTriagens = async () => {
+    if (!user || authLoading) {
+      console.log('⚠️ Não é possível atualizar triagens: usuário não autenticado');
+      return;
+    }
     await loadTriagens();
   };
 
