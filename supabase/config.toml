@@ -1,0 +1,115 @@
+
+project_id = "pcviofkusmybzfdheqrl"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+
+[db.pooler]
+enabled = false
+port = 54329
+pool_mode = "transaction"
+default_pool_size = 20
+max_client_conn = 100
+
+[realtime]
+enabled = true
+ip_version = "ipv4"
+port = 54323
+max_header_length = 4096
+
+[studio]
+enabled = true
+port = 54324
+api_url = "http://127.0.0.1:54321"
+openai_api_key = "env(OPENAI_API_KEY)"
+
+[inbucket]
+enabled = true
+port = 54325
+smtp_port = 54326
+pop3_port = 54327
+
+[functions.create-trial-checkout]
+verify_jwt = false
+
+[functions.check-subscription]
+verify_jwt = false
+
+[functions.customer-portal]
+verify_jwt = false
+
+[auth]
+enabled = true
+port = 54328
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["https://localhost:3000"]
+jwt_expiry = 3600
+refresh_token_rotation_enabled = true
+security_update_password_require_reauthentication = true
+security_refresh_token_reuse_interval = 10
+external_email_enabled = true
+external_phone_enabled = true
+sms_test_otp = "123456"
+sms_max_frequency = 60
+password_min_length = 6
+security_manual_linking_enabled = false
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = false
+template_welcome = """
+<h2>Confirm your signup</h2>
+
+<p>Follow this link to confirm your user:</p>
+<p><a href="{{ .ConfirmationURL }}">Confirm your mail</a></p>
+"""
+template_welcome_subject = "Confirm your signup"
+template_invite = """
+<h2>You have been invited</h2>
+
+<p>You have been invited to create a user on {{ .SiteURL }}. Follow this link to accept the invite:</p>
+<p><a href="{{ .ConfirmationURL }}">Accept the invite</a></p>
+"""
+template_invite_subject = "You have been invited"
+template_magic_link = """
+<h2>Magic Link</h2>
+
+<p>Follow this link to login:</p>
+<p><a href="{{ .ConfirmationURL }}">Log In</a></p>
+"""
+template_magic_link_subject = "Your Magic Link"
+template_confirmation = """
+<h2>Confirm your email</h2>
+
+<p>Follow this link to confirm your email:</p>
+<p><a href="{{ .ConfirmationURL }}">Confirm your mail</a></p>
+"""
+template_confirmation_subject = "Confirm your email"
+template_recovery = """
+<h2>Reset Password</h2>
+
+<p>Follow this link to reset the password for your user:</p>
+<p><a href="{{ .ConfirmationURL }}">Reset Password</a></p>
+"""
+template_recovery_subject = "Reset Your Password"
+template_email_change = """
+<h2>Confirm Change of Email</h2>
+
+<p>Follow this link to confirm the update of your email from {{ .Email }} to {{ .NewEmail }}:</p>
+<p><a href="{{ .ConfirmationURL }}">Change Email</a></p>
+"""
+template_email_change_subject = "Confirm Change of Email"
+
+[analytics]
+enabled = false
+port = 54327
+vector_port = 54328
+gql_port = 54329
