@@ -6,18 +6,19 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/hooks/useAuth';
 import { useTriagemList } from '@/hooks/useTriagemList';
+import { useStats } from '@/hooks/useStats';
+import { useTodayAppointments } from '@/hooks/useTodayAppointments';
+
 const ProfessionalDashboard = ({
   onNavigate,
   selectedPlan,
   onPlanChange
 }) => {
-  const {
-    logout
-  } = useAuth();
-  const {
-    pacientesAguardando,
-    loading: loadingTriagens
-  } = useTriagemList();
+  const { logout } = useAuth();
+  const { pacientesAguardando, loading: loadingTriagens } = useTriagemList();
+  const { stats, loading: loadingStats } = useStats();
+  const { appointments: upcomingAppointments, loading: loadingAppointments } = useTodayAppointments();
+
   const handleNavigate = section => {
     if (section === 'pacientes') {
       onNavigate('patients');
@@ -27,26 +28,22 @@ const ProfessionalDashboard = ({
       onNavigate('consultation-history');
     }
   };
+
   const handleIniciarAtendimento = paciente => {
-    // Navegar para o atendimento com o paciente selecionado
     onNavigate('novo-atendimento');
   };
+
   const getClassificacaoColor = classificacao => {
     switch (classificacao) {
-      case 'vermelho':
-        return 'bg-red-500';
-      case 'laranja':
-        return 'bg-orange-500';
-      case 'amarelo':
-        return 'bg-yellow-500';
-      case 'verde':
-        return 'bg-green-500';
-      case 'azul':
-        return 'bg-blue-500';
-      default:
-        return 'bg-gray-500';
+      case 'vermelho': return 'bg-red-500';
+      case 'laranja': return 'bg-orange-500';
+      case 'amarelo': return 'bg-yellow-500';
+      case 'verde': return 'bg-green-500';
+      case 'azul': return 'bg-blue-500';
+      default: return 'bg-gray-500';
     }
   };
+
   const getTempoEspera = createdAt => {
     const agora = new Date();
     const criacao = new Date(createdAt);
@@ -60,69 +57,55 @@ const ProfessionalDashboard = ({
       return `${horas}h ${minutos}min`;
     }
   };
-  const professionalStats = [{
-    title: 'Pacientes Cadastrados',
-    value: '125',
-    limit: '200',
-    icon: Users,
-    color: 'text-blue-700',
-    bgColor: 'bg-blue-50'
-  }, {
-    title: 'Agendamentos Hoje',
-    value: '15',
-    limit: '50',
-    icon: Calendar,
-    color: 'text-blue-700',
-    bgColor: 'bg-blue-50'
-  }, {
-    title: 'Consultas do Mês',
-    value: '180',
-    limit: '300',
-    icon: Activity,
-    color: 'text-blue-600',
-    bgColor: 'bg-blue-50'
-  }, {
-    title: 'Equipe de Profissionais',
-    value: '3',
-    limit: '5',
-    icon: Stethoscope,
-    color: 'text-blue-600',
-    bgColor: 'bg-blue-50'
-  }, {
-    title: 'Taxa de Ocupação',
-    value: '78%',
-    limit: '100%',
-    icon: BarChart3,
-    color: 'text-blue-600',
-    bgColor: 'bg-blue-50'
-  }];
-  const upcomingAppointments = [{
-    time: '09:00',
-    patient: 'Maria Silva',
-    doctor: 'Dr. João',
-    type: 'Consulta',
-    status: 'confirmado'
-  }, {
-    time: '10:30',
-    patient: 'Pedro Santos',
-    doctor: 'Dra. Ana',
-    type: 'Retorno',
-    status: 'confirmado'
-  }, {
-    time: '11:00',
-    patient: 'Ana Costa',
-    doctor: 'Dr. Carlos',
-    type: 'Exame',
-    status: 'pendente'
-  }, {
-    time: '14:00',
-    patient: 'José Oliveira',
-    doctor: 'Dr. João',
-    type: 'Consulta',
-    status: 'confirmado'
-  }];
+
+  // Stats dinâmicas baseadas nos dados reais
+  const professionalStats = [
+    {
+      title: 'Pacientes Cadastrados',
+      value: loadingStats ? '...' : stats.pacientesCadastrados.toString(),
+      limit: '200',
+      icon: Users,
+      color: 'text-blue-700',
+      bgColor: 'bg-blue-50'
+    },
+    {
+      title: 'Agendamentos Hoje',
+      value: loadingStats ? '...' : stats.agendamentosHoje.toString(),
+      limit: '50',
+      icon: Calendar,
+      color: 'text-blue-700',
+      bgColor: 'bg-blue-50'
+    },
+    {
+      title: 'Consultas do Mês',
+      value: loadingStats ? '...' : stats.consultasMes.toString(),
+      limit: '300',
+      icon: Activity,
+      color: 'text-blue-600',
+      bgColor: 'bg-blue-50'
+    },
+    {
+      title: 'Equipe de Profissionais',
+      value: '3', // Este pode permanecer fixo ou ser calculado
+      limit: '5',
+      icon: Stethoscope,
+      color: 'text-blue-600',
+      bgColor: 'bg-blue-50'
+    },
+    {
+      title: 'Taxa de Ocupação',
+      value: loadingStats ? '...' : `${stats.taxaOcupacao}%`,
+      limit: '100%',
+      icon: BarChart3,
+      color: 'text-blue-600',
+      bgColor: 'bg-blue-50'
+    }
+  ];
+
   const professionalFeatures = ['Cadastro de até 200 pacientes', 'Sistema de triagem completo', 'Múltiplos profissionais (até 5)', 'Relatórios avançados', 'Agendamento online', 'Prescrições médicas', 'Suporte prioritário', 'Backup diário'];
-  return <div className="space-y-6">
+
+  return (
+    <div className="space-y-6">
       {/* Plan Header */}
       <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl p-8 text-white shadow-xl">
         <div className="flex items-center justify-between">
@@ -220,9 +203,10 @@ const ProfessionalDashboard = ({
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
         {professionalStats.map((stat, index) => {
-        const Icon = stat.icon;
-        const percentage = stat.title === 'Taxa de Ocupação' ? parseFloat(stat.value.replace('%', '')) : parseInt(stat.value) / parseInt(stat.limit) * 100;
-        return <Card key={index} className="border-blue-200 hover:shadow-lg transition-shadow">
+          const Icon = stat.icon;
+          const percentage = stat.title === 'Taxa de Ocupação' ? parseFloat(stat.value.replace('%', '')) || 0 : (parseInt(stat.value) || 0) / parseInt(stat.limit) * 100;
+          return (
+            <Card key={index} className="border-blue-200 hover:shadow-lg transition-shadow">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-gray-600">
                   {stat.title}
@@ -236,18 +220,22 @@ const ProfessionalDashboard = ({
                 <p className="text-xs text-gray-600">
                   {stat.limit !== 'Ilimitado' && `Limite: ${stat.limit}`}
                 </p>
-                {stat.title === 'Taxa de Ocupação' && <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                    <div className="bg-blue-600 h-2 rounded-full" style={{
-                width: `${percentage}%`
-              }}></div>
-                  </div>}
+                {stat.title === 'Taxa de Ocupação' && (
+                  <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                    <div 
+                      className="bg-blue-600 h-2 rounded-full" 
+                      style={{ width: `${Math.min(percentage, 100)}%` }}
+                    ></div>
+                  </div>
+                )}
               </CardContent>
-            </Card>;
-      })}
+            </Card>
+          );
+        })}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Agenda */}
+        {/* Agenda com dados reais */}
         <Card className="border-blue-200 shadow-lg">
           <CardHeader>
             <CardTitle className="flex items-center text-xl text-blue-800">
@@ -257,22 +245,36 @@ const ProfessionalDashboard = ({
             <CardDescription>Agendamentos de toda a equipe</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {upcomingAppointments.map((appointment, index) => <div key={index} className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-100">
-                  <div className="flex items-center space-x-3">
-                    <div className="text-sm font-bold text-blue-700 bg-white px-2 py-1 rounded">
-                      {appointment.time}
+            {loadingAppointments ? (
+              <div className="text-center py-4">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
+                <p className="text-sm text-gray-600 mt-2">Carregando agenda...</p>
+              </div>
+            ) : upcomingAppointments.length > 0 ? (
+              <div className="space-y-3">
+                {upcomingAppointments.map((appointment, index) => (
+                  <div key={index} className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-100">
+                    <div className="flex items-center space-x-3">
+                      <div className="text-sm font-bold text-blue-700 bg-white px-2 py-1 rounded">
+                        {appointment.time}
+                      </div>
+                      <div>
+                        <p className="font-semibold text-gray-900">{appointment.patient}</p>
+                        <p className="text-sm text-gray-600">{appointment.doctor} • {appointment.type}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-semibold text-gray-900">{appointment.patient}</p>
-                      <p className="text-sm text-gray-600">{appointment.doctor} • {appointment.type}</p>
-                    </div>
+                    <Badge variant={appointment.status === 'confirmado' ? 'default' : 'secondary'} className="text-xs">
+                      {appointment.status === 'confirmado' ? 'Confirmado' : 'Pendente'}
+                    </Badge>
                   </div>
-                  <Badge variant={appointment.status === 'confirmado' ? 'default' : 'secondary'} className="text-xs">
-                    {appointment.status === 'confirmado' ? 'Confirmado' : 'Pendente'}
-                  </Badge>
-                </div>)}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-6">
+                <Calendar className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                <p className="text-gray-600 text-sm">Nenhum agendamento para hoje</p>
+              </div>
+            )}
             <Button className="w-full mt-4 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800" onClick={() => onNavigate('appointments')}>
               Ver Agenda Completa
             </Button>
@@ -337,6 +339,8 @@ const ProfessionalDashboard = ({
           </CardContent>
         </Card>
       </div>
-    </div>;
+    </div>
+  );
 };
+
 export default ProfessionalDashboard;

@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { useToast } from './use-toast';
@@ -21,19 +21,25 @@ export interface Professional {
 
 export const useProfessionals = () => {
   const [loading, setLoading] = useState(false);
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
 
   const getProfessionals = async (): Promise<Professional[]> => {
     try {
       setLoading(true);
       
-      if (!user) {
-        console.log('Usuário não autenticado');
+      // Aguardar autenticação estar completa
+      if (authLoading) {
+        console.log('🔒 Aguardando autenticação para carregar profissionais...');
         return [];
       }
       
-      console.log('Buscando profissionais para usuário:', user.id);
+      if (!user) {
+        console.log('❌ Usuário não autenticado para buscar profissionais');
+        return [];
+      }
+      
+      console.log('✅ Buscando profissionais para usuário:', user.id);
       
       const { data, error } = await supabase
         .from('professionals')
@@ -46,15 +52,20 @@ export const useProfessionals = () => {
         throw error;
       }
       
-      console.log('Profissionais encontrados:', data);
+      console.log('✅ Profissionais encontrados:', data);
       return data || [];
     } catch (error: any) {
       console.error('Erro ao buscar profissionais:', error);
-      toast({
-        title: 'Erro ao carregar profissionais',
-        description: error.message || 'Não foi possível carregar a lista de profissionais',
-        variant: 'destructive',
-      });
+      
+      // Só mostrar toast se o usuário estiver autenticado
+      if (user) {
+        toast({
+          title: 'Erro ao carregar profissionais',
+          description: error.message || 'Não foi possível carregar a lista de profissionais',
+          variant: 'destructive',
+        });
+      }
+      
       return [];
     } finally {
       setLoading(false);
