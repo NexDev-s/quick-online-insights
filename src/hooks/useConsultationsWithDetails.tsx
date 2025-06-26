@@ -39,7 +39,7 @@ export const useConsultationsWithDetails = () => {
       console.log('📊 Buscando consultas com detalhes...');
       
       const { data, error } = await supabase
-        .from('consultations')
+        .from('medical_consultations')
         .select(`
           *,
           patient:patients(nome, cpf, telefone),
@@ -56,7 +56,14 @@ export const useConsultationsWithDetails = () => {
       console.log(`✅ ${data?.length || 0} consultas encontradas com detalhes`);
       
       return data?.map(consultation => ({
-        ...consultation,
+        id: consultation.id,
+        patient_id: consultation.patient_id,
+        professional_id: consultation.professional_id,
+        subjetivo: consultation.subjetivo,
+        objetivo: consultation.objetivo,
+        avaliacao: consultation.avaliacao,
+        plano: consultation.plano,
+        created_at: consultation.created_at,
         patientName: consultation.patient?.nome || 'Paciente não encontrado',
         patientCpf: consultation.patient?.cpf,
         patientTelefone: consultation.patient?.telefone,
@@ -68,7 +75,7 @@ export const useConsultationsWithDetails = () => {
     } catch (error: any) {
       console.error('❌ Erro ao buscar consultas com detalhes:', error);
       
-      if (user) {
+      if (user && !authLoading) {
         toast({
           title: 'Erro ao carregar consultas',
           description: error.message || 'Não foi possível carregar as consultas com detalhes',

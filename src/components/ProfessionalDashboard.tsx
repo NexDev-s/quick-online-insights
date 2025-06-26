@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Calendar, Users, Clock, FileText, BarChart3, Activity, Stethoscope, UserPlus, Shield, LogOut } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,10 +15,25 @@ const ProfessionalDashboard = ({
   selectedPlan,
   onPlanChange
 }) => {
-  const { logout } = useAuth();
+  const { logout, user, loading: authLoading } = useAuth();
   const { pacientesAguardando, loading: loadingTriagens } = useTriagemList();
   const { stats, loading: loadingStats } = useStats();
   const { appointments: upcomingAppointments, loading: loadingAppointments } = useTodayAppointments();
+
+  // Se ainda estiver carregando a autenticação, mostra loading
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <p className="ml-2 text-gray-600">Carregando dashboard...</p>
+      </div>
+    );
+  }
+
+  // Se não estiver autenticado, não renderiza nada
+  if (!user) {
+    return null;
+  }
 
   const handleNavigate = section => {
     if (section === 'pacientes') {
@@ -288,11 +304,15 @@ const ProfessionalDashboard = ({
             <CardDescription>Fila de atendimento por prioridade</CardDescription>
           </CardHeader>
           <CardContent>
-            {loadingTriagens ? <div className="text-center py-4">
+            {loadingTriagens ? (
+              <div className="text-center py-4">
                 <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
                 <p className="text-sm text-gray-600 mt-2">Carregando...</p>
-              </div> : pacientesAguardando.length > 0 ? <div className="space-y-3 max-h-64 overflow-y-auto">
-                {pacientesAguardando.map((triagem, index) => <div key={triagem.id} className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-100 cursor-pointer hover:bg-blue-100 transition-colors" onClick={() => handleIniciarAtendimento(triagem)}>
+              </div>
+            ) : pacientesAguardando.length > 0 ? (
+              <div className="space-y-3 max-h-64 overflow-y-auto">
+                {pacientesAguardando.map((triagem, index) => (
+                  <div key={triagem.id} className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-100 cursor-pointer hover:bg-blue-100 transition-colors" onClick={() => handleIniciarAtendimento(triagem)}>
                     <div className="flex items-center space-x-3">
                       <div className={`w-4 h-4 ${getClassificacaoColor(triagem.classificacao_manchester)} rounded-full`}></div>
                       <div>
@@ -304,14 +324,18 @@ const ProfessionalDashboard = ({
                       <p className="text-xs text-gray-500">Aguardando</p>
                       <p className="text-xs font-medium text-blue-600">{getTempoEspera(triagem.created_at)}</p>
                     </div>
-                  </div>)}
-              </div> : <div className="text-center py-6">
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-6">
                 <Users className="h-8 w-8 text-gray-400 mx-auto mb-2" />
                 <p className="text-gray-600 text-sm">Nenhum paciente aguardando</p>
                 <Button variant="outline" className="mt-2 text-xs" onClick={() => onNavigate('triagem')}>
                   Realizar Triagem
                 </Button>
-              </div>}
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -323,10 +347,12 @@ const ProfessionalDashboard = ({
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {professionalFeatures.slice(0, 6).map((feature, index) => <div key={index} className="flex items-center space-x-2">
+              {professionalFeatures.slice(0, 6).map((feature, index) => (
+                <div key={index} className="flex items-center space-x-2">
                   <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
                   <span className="text-sm">{feature}</span>
-                </div>)}
+                </div>
+              ))}
             </div>
             <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
               <div className="flex items-center space-x-2">

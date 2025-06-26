@@ -18,10 +18,14 @@ export const useTodayAppointments = () => {
   const { user, loading: authLoading } = useAuth();
 
   const loadTodayAppointments = async () => {
-    if (!user || authLoading) return;
+    if (!user || authLoading) {
+      console.log('⏳ Aguardando autenticação para carregar agendamentos...');
+      return;
+    }
 
     try {
       setLoading(true);
+      console.log('📅 Carregando agendamentos de hoje para usuário:', user.id);
       
       const hoje = new Date().toISOString().split('T')[0];
       
@@ -37,7 +41,10 @@ export const useTodayAppointments = () => {
         .lt('data_agendamento', hoje + 'T23:59:59')
         .order('data_agendamento', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Erro ao buscar agendamentos:', error);
+        throw error;
+      }
 
       const formattedAppointments = data?.map(apt => ({
         id: apt.id,
@@ -51,9 +58,10 @@ export const useTodayAppointments = () => {
         status: apt.status || 'confirmado'
       })) || [];
 
+      console.log('✅ Agendamentos de hoje carregados:', formattedAppointments.length);
       setAppointments(formattedAppointments);
     } catch (error) {
-      console.error('Erro ao carregar agendamentos de hoje:', error);
+      console.error('❌ Erro ao carregar agendamentos de hoje:', error);
       setAppointments([]);
     } finally {
       setLoading(false);
@@ -61,8 +69,14 @@ export const useTodayAppointments = () => {
   };
 
   useEffect(() => {
+    // Só carrega se o usuário estiver autenticado e não estiver carregando
     if (user && !authLoading) {
+      console.log('🔄 Iniciando carregamento de agendamentos de hoje...');
       loadTodayAppointments();
+    } else if (!authLoading && !user) {
+      // Se não estiver autenticado e não estiver carregando, reseta
+      setLoading(false);
+      setAppointments([]);
     }
   }, [user, authLoading]);
 

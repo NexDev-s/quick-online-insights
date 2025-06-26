@@ -27,10 +27,14 @@ export const useStats = () => {
   const { user, loading: authLoading } = useAuth();
 
   const loadStats = async () => {
-    if (!user || authLoading) return;
+    if (!user || authLoading) {
+      console.log('⏳ Aguardando autenticação para carregar estatísticas...');
+      return;
+    }
 
     try {
       setLoading(true);
+      console.log('📊 Carregando estatísticas para usuário:', user.id);
       
       // Buscar pacientes cadastrados
       const { count: pacientesCount } = await supabase
@@ -51,7 +55,7 @@ export const useStats = () => {
       const inicioMes = new Date();
       inicioMes.setDate(1);
       const { count: consultasCount } = await supabase
-        .from('consultations')
+        .from('medical_consultations')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', user.id)
         .gte('created_at', inicioMes.toISOString());
@@ -59,7 +63,7 @@ export const useStats = () => {
       // Calcular taxa de ocupação (exemplo simplificado)
       const taxaOcupacao = agendamentosCount ? Math.round((agendamentosCount / 10) * 100) : 0;
 
-      setStats({
+      const newStats = {
         pacientesCadastrados: pacientesCount || 0,
         agendamentosHoje: agendamentosCount || 0,
         consultasMes: consultasCount || 0,
@@ -67,17 +71,25 @@ export const useStats = () => {
         limitePacientes: 50,
         limiteAgendamentos: 10,
         limiteConsultas: 100
-      });
+      };
+
+      console.log('✅ Estatísticas carregadas:', newStats);
+      setStats(newStats);
     } catch (error) {
-      console.error('Erro ao carregar estatísticas:', error);
+      console.error('❌ Erro ao carregar estatísticas:', error);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
+    // Só carrega se o usuário estiver autenticado e não estiver carregando
     if (user && !authLoading) {
+      console.log('🔄 Iniciando carregamento de estatísticas...');
       loadStats();
+    } else if (!authLoading && !user) {
+      // Se não estiver autenticado e não estiver carregando, reseta os stats
+      setLoading(false);
     }
   }, [user, authLoading]);
 
